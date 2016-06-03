@@ -1,6 +1,7 @@
 package com.github.nkzawa.socketio.androidchat;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,7 +12,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,6 +39,8 @@ public class MySocket extends Fragment {
     private EditText mInputMessageView;
     private RecyclerView mMessagesView;
     private Socket mSocket;
+    private ImageButton btnSend;
+    String username="";
     {
         try {
             mSocket = IO.socket(Constants.CHAT_SERVER_URL);
@@ -59,6 +64,10 @@ public class MySocket extends Fragment {
         super.onCreate(savedInstanceState);
 
         setHasOptionsMenu(true);
+        Bundle extra=getActivity().getIntent().getExtras();
+        if(extra!=null){
+            username=extra.getString("username");
+        }
 
         mSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
         mSocket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
@@ -97,6 +106,13 @@ public class MySocket extends Fragment {
                 return false;
             }
         });
+        btnSend=(ImageButton)view.findViewById(R.id.send_button);
+        btnSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                attemptSend();
+            }
+        });
     }
 
     @Override
@@ -133,8 +149,8 @@ public class MySocket extends Fragment {
                 @Override
                 public void run() {
                     //JSONObject data = (JSONObject) args[0];
-                    String username="outsider";
-                    String message= (String) args[0];
+                    String username=(String) args[0];
+                    String message= (String) args[1];
 
 
                     addMessage(username, message);
@@ -166,10 +182,10 @@ public class MySocket extends Fragment {
         }
 
         mInputMessageView.setText("");
-        addMessage("akki", message);
+        addMessage(username, message);
 
         // perform the sending message attempt.
-        mSocket.emit("chat", message);
+        mSocket.emit("chat", username,message);
     }
 
     private void scrollToBottom() {
